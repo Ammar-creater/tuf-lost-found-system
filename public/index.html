@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TUF University - Lost & Found System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #1a5d3c 0%, #0a2e1f 100%); min-height: 100vh; }
+        .header { background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; flex-wrap: wrap; }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo i { font-size: 2rem; color: #1a5d3c; }
+        .logo h1 { font-size: 1.3rem; color: #1a5d3c; }
+        .logo p { font-size: 0.7rem; color: #666; }
+        .nav-buttons { display: flex; gap: 10px; }
+        .nav-btn { padding: 8px 20px; border: none; border-radius: 25px; cursor: pointer; font-weight: 500; transition: all 0.3s ease; }
+        .nav-btn.primary { background: #1a5d3c; color: white; }
+        .nav-btn.primary:hover { background: #0a2e1f; transform: translateY(-2px); }
+        .nav-btn.outline { background: transparent; border: 2px solid #1a5d3c; color: #1a5d3c; }
+        .nav-btn.outline:hover { background: #1a5d3c; color: white; }
+        .main-content { padding: 40px 0; }
+        .hero { background: linear-gradient(135deg, rgba(26,93,60,0.95) 0%, rgba(10,46,31,0.95) 100%); border-radius: 20px; padding: 40px; color: white; text-align: center; margin-bottom: 30px; }
+        .hero h2 { font-size: 2rem; margin-bottom: 10px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; border-radius: 15px; padding: 20px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.3s ease; }
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-card i { font-size: 2rem; color: #c9a03d; margin-bottom: 10px; }
+        .stat-number { font-size: 2rem; font-weight: 700; color: #1a5d3c; }
+        .stat-label { color: #666; font-size: 0.9rem; }
+        .form-container { background: white; border-radius: 20px; padding: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .form-title { color: #1a5d3c; margin-bottom: 20px; font-size: 1.5rem; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; color: #333; }
+        .form-group label.required::after { content: '*'; color: red; margin-left: 5px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1rem; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #1a5d3c; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-top: 20px; }
+        .item-card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-left: 4px solid #1a5d3c; transition: all 0.3s ease; }
+        .item-card.lost { border-left-color: #dc3545; }
+        .item-card.found { border-left-color: #28a745; }
+        .item-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+        .item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .item-type { padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
+        .item-type.lost { background: #ffeaea; color: #dc3545; }
+        .item-type.found { background: #e8f5e9; color: #28a745; }
+        .item-id { color: #999; font-size: 0.75rem; }
+        .item-name { font-size: 1.2rem; font-weight: 600; color: #333; margin-bottom: 10px; cursor: pointer; }
+        .item-name:hover { color: #1a5d3c; }
+        .item-details { margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; }
+        .detail-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 0.85rem; color: #666; }
+        .detail-row i { width: 20px; color: #c9a03d; }
+        .location-lock { background: #f8f9fa; padding: 8px; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; }
+        .location-lock:hover { background: #e9ecef; }
+        .location-lock i.fa-lock { color: #dc3545; }
+        .search-box { display: flex; gap: 10px; margin-bottom: 20px; }
+        .search-box input { flex: 1; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1rem; }
+        .search-box select { padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1rem; }
+        .btn { padding: 10px 25px; border: none; border-radius: 25px; font-size: 1rem; font-weight: 500; cursor: pointer; transition: all 0.3s ease; }
+        .btn-primary { background: #1a5d3c; color: white; }
+        .btn-primary:hover { background: #0a2e1f; transform: translateY(-2px); }
+        .btn-secondary { background: #c9a03d; color: white; }
+        .alert { padding: 15px; border-radius: 10px; margin-top: 15px; }
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-error { background: #f8d7da; color: #721c24; }
+        .alert-info { background: #d1ecf1; color: #0c5460; }
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal-content { background: white; margin: 10% auto; border-radius: 20px; width: 90%; max-width: 500px; animation: slideDown 0.3s ease; }
+        .modal-header { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .modal-body { padding: 20px; max-height: 60vh; overflow-y: auto; }
+        .close { font-size: 1.5rem; cursor: pointer; color: #999; }
+        @keyframes slideDown { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0; }
+        .tab { padding: 10px 20px; background: none; border: none; cursor: pointer; font-size: 1rem; font-weight: 500; color: #666; }
+        .tab.active { color: #1a5d3c; border-bottom: 2px solid #1a5d3c; }
+        .loading { text-align: center; padding: 40px; color: #666; }
+        .footer { background: #0a2e1f; color: white; text-align: center; padding: 20px; margin-top: 40px; }
+        .login-prompt { background: linear-gradient(135deg, #1a5d3c, #0a2e1f); color: white; padding: 15px; border-radius: 10px; text-align: center; margin: 10px 0; }
+        .login-prompt button { background: white; color: #1a5d3c; border: none; padding: 8px 20px; border-radius: 20px; margin-top: 10px; cursor: pointer; }
+        @media (max-width: 768px) { .form-row { grid-template-columns: 1fr; } .items-grid { grid-template-columns: 1fr; } .header-content { flex-direction: column; gap: 10px; } .hero h2 { font-size: 1.3rem; } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-university"></i>
+                    <div>
+                        <h1>TUF University</h1>
+                        <p>Lost & Found Management System</p>
+                    </div>
+                </div>
+                <div class="nav-buttons">
+                    <button class="nav-btn outline" onclick="showSection('report')">Report Item</button>
+                    <button class="nav-btn outline" onclick="showSection('browse')">Browse Items</button>
+                    <button class="nav-btn primary" onclick="window.location.href='/login.html'">
+                        <i class="fas fa-lock"></i> Admin
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="container">
+            <div class="hero">
+                <h2>Welcome to TUF Lost & Found</h2>
+                <p>Report lost items, find your belongings, and help others recover their valuables</p>
+            </div>
+
+            <div id="statsContainer" class="stats-grid">
+                <div class="loading"><i class="fas fa-spinner fa-spin"></i><br>Loading stats...</div>
+            </div>
+
+            <!-- Report Section -->
+            <div id="reportSection" class="form-container">
+                <h3 class="form-title">Report an Item</h3>
+                <div id="reportAlert"></div>
+                <form id="reportForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="required">Item Type</label>
+                            <select id="reportType" required>
+                                <option value="">Select Type</option>
+                                <option value="lost">Lost Item</option>
+                                <option value="found">Found Item</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="required">Category</label>
+                            <select id="category" required>
+                                <option value="">Select Category</option>
+                                <option value="Electronics">Electronics</option>
+                                <option value="Mobile Phones">Mobile Phones</option>
+                                <option value="Laptops">Laptops</option>
+                                <option value="Clothing">Clothing</option>
+                                <option value="Bags">Bags</option>
+                                <option value="Books">Books</option>
+                                <option value="ID Cards">ID Cards</option>
+                                <option value="Keys">Keys</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="required">Item Name</label>
+                        <input type="text" id="itemName" placeholder="e.g., iPhone 14, Blue Backpack" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="required">CNIC Number</label>
+                            <input type="text" id="cnic" placeholder="12345-1234567-1" required>
+                            <small>Format: 12345-1234567-1</small>
+                        </div>
+                       <div class="form-group">
+    <label class="required">Contact (Phone Number)</label>
+    <input type="tel" id="contact" placeholder="03001234567" required>
+    <small>Pakistani format: 03XXXXXXXXX (e.g., 03001234567)</small>
+</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Location</label>
+                        <input type="text" id="location" placeholder="Where was it lost/found?">
+                        <small>Location will only be visible to admin</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="description" rows="3" placeholder="Additional details..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit Report</button>
+                </form>
+            </div>
+
+            <!-- Browse Section -->
+            <div id="browseSection" class="form-container" style="display: none;">
+                <h3 class="form-title">Browse Items</h3>
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button class="btn btn-primary" onclick="loadLostItems()">Lost Items</button>
+                    <button class="btn btn-primary" onclick="loadFoundItems()">Found Items</button>
+                    <button class="btn btn-secondary" onclick="loadAllItems()">All Items</button>
+                </div>
+                <div id="browseResults"></div>
+            </div>
+
+            <!-- Search Section -->
+            <div id="searchSection" class="form-container" style="display: none;">
+                <h3 class="form-title">Search Items</h3>
+                <div class="search-box">
+                    <input type="text" id="searchKeyword" placeholder="Search by item name, category...">
+                    <select id="searchType">
+                        <option value="all">All Items</option>
+                        <option value="lost">Lost Only</option>
+                        <option value="found">Found Only</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="performSearch()">Search</button>
+                </div>
+                <div id="searchResults"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>&copy; 2025 TUF University - Lost & Found Management System</p>
+        <p>Click on <i class="fas fa-lock"></i> location lock to view details (Admin login required)</p>
+    </div>
+
+    <!-- Location Modal -->
+    <div id="locationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-map-marker-alt"></i> Location Details</h3>
+                <span class="close" onclick="closeLocationModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="locationModalBody"></div>
+        </div>
+    </div>
+
+    <!-- Login Prompt Modal -->
+    <div id="loginPromptModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-lock"></i> Admin Access Required</h3>
+                <span class="close" onclick="closeLoginPrompt()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="login-prompt">
+                    <i class="fas fa-shield-alt" style="font-size: 3rem; margin-bottom: 10px;"></i>
+                    <h4>Location Details are Restricted</h4>
+                    <p>Location information is only available to authorized university administration for privacy and security reasons.</p>
+                    <button onclick="window.location.href='/login.html'">
+                        <i class="fas fa-sign-in-alt"></i> Login as Admin
+                    </button>
+                    <button onclick="closeLoginPrompt()" style="background: #6c757d; color: white; margin-left: 10px;">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Show/Hide Sections
+    function showSection(section) {
+        document.getElementById('reportSection').style.display = section === 'report' ? 'block' : 'none';
+        document.getElementById('browseSection').style.display = section === 'browse' ? 'block' : 'none';
+        document.getElementById('searchSection').style.display = section === 'search' ? 'block' : 'none';
+        
+        if (section === 'browse') {
+            loadAllItems();
+        }
+    }
+
+    // Load Statistics
+    async function loadStats() {
+        try {
+            const response = await fetch('/api/stats');
+            const result = await response.json();
+            
+            if (result.success) {
+                document.getElementById('statsContainer').innerHTML = `
+                    <div class="stat-card" onclick="showSection('browse'); loadLostItems()">
+                        <i class="fas fa-frown"></i>
+                        <div class="stat-number">${result.data.lost_count || 0}</div>
+                        <div class="stat-label">Lost Items</div>
+                    </div>
+                    <div class="stat-card" onclick="showSection('browse'); loadFoundItems()">
+                        <i class="fas fa-smile"></i>
+                        <div class="stat-number">${result.data.found_count || 0}</div>
+                        <div class="stat-label">Found Items</div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-chart-line"></i>
+                        <div class="stat-number">${result.data.today_count || 0}</div>
+                        <div class="stat-label">Today's Reports</div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-tasks"></i>
+                        <div class="stat-number">${result.data.total_count || 0}</div>
+                        <div class="stat-label">Total Items</div>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('Stats error:', error);
+        }
+    }
+
+    // Load Lost Items
+    async function loadLostItems() {
+        const container = document.getElementById('browseResults');
+        container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i><br>Loading lost items...</div>';
+        
+        try {
+            const response = await fetch('/api/items/lost');
+            const result = await response.json();
+            displayItems(result.data, 'Lost Items');
+        } catch (error) {
+            container.innerHTML = '<div class="alert alert-error">Failed to load lost items</div>';
+        }
+    }
+
+    // Load Found Items
+    async function loadFoundItems() {
+        const container = document.getElementById('browseResults');
+        container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i><br>Loading found items...</div>';
+        
+        try {
+            const response = await fetch('/api/items/found');
+            const result = await response.json();
+            displayItems(result.data, 'Found Items');
+        } catch (error) {
+            container.innerHTML = '<div class="alert alert-error">Failed to load found items</div>';
+        }
+    }
+
+    // Load All Items
+    async function loadAllItems() {
+        const container = document.getElementById('browseResults');
+        container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i><br>Loading all items...</div>';
+        
+        try {
+            const [lostRes, foundRes] = await Promise.all([
+                fetch('/api/items/lost'),
+                fetch('/api/items/found')
+            ]);
+            
+            const lostItems = await lostRes.json();
+            const foundItems = await foundRes.json();
+            const allItems = [...(lostItems.data || []), ...(foundItems.data || [])];
+            allItems.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            displayItems(allItems, 'All Items');
+        } catch (error) {
+            container.innerHTML = '<div class="alert alert-error">Failed to load items</div>';
+        }
+    }
+
+    // Display Items
+    function displayItems(items, title) {
+        const container = document.getElementById('browseResults');
+        
+        if (!items || items.length === 0) {
+            container.innerHTML = `<div class="alert alert-info">No ${title.toLowerCase()} found</div>`;
+            return;
+        }
+        
+        let html = `<h4>${title} (${items.length} items)</h4><div class="items-grid">`;
+        
+        items.forEach(item => {
+            html += `
+                <div class="item-card ${item.type}">
+                    <div class="item-header">
+                        <span class="item-type ${item.type}">${item.type.toUpperCase()}</span>
+                        <span class="item-id">#${item.id}</span>
+                    </div>
+                    <div class="item-name" onclick="viewItemDetails(${item.id})">${escapeHtml(item.name)}</div>
+                    <div class="item-details">
+                        <div class="detail-row">
+                            <i class="fas fa-tag"></i>
+                            <span>${escapeHtml(item.category)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <i class="fas fa-id-card"></i>
+                            <span>CNIC: ${item.cnic || '*****'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <i class="fas fa-calendar"></i>
+                            <span>${new Date(item.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <div class="detail-row location-lock" onclick="showLocationPrompt(${item.id})">
+                            <i class="fas fa-lock"></i>
+                            <span><i class="fas fa-map-marker-alt"></i> <strong>Location:</strong> <span style="color: #1a5d3c;">Click to view (Admin only)</span></span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += `</div>`;
+        container.innerHTML = html;
+    }
+
+    // Display Search Results
+    function displaySearchResults(items, title) {
+        const container = document.getElementById('searchResults');
+        
+        if (!items || items.length === 0) {
+            container.innerHTML = `<div class="alert alert-info">No results found</div>`;
+            return;
+        }
+        
+        let html = `<h4>${title} (${items.length} items)</h4><div class="items-grid">`;
+        
+        items.forEach(item => {
+            html += `
+                <div class="item-card ${item.type}">
+                    <div class="item-header">
+                        <span class="item-type ${item.type}">${item.type.toUpperCase()}</span>
+                        <span class="item-id">#${item.id}</span>
+                    </div>
+                    <div class="item-name" onclick="viewItemDetails(${item.id})">${escapeHtml(item.name)}</div>
+                    <div class="item-details">
+                        <div class="detail-row">
+                            <i class="fas fa-tag"></i>
+                            <span>${escapeHtml(item.category)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <i class="fas fa-id-card"></i>
+                            <span>CNIC: ${item.cnic || '*****'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <i class="fas fa-calendar"></i>
+                            <span>${new Date(item.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <div class="detail-row location-lock" onclick="showLocationPrompt(${item.id})">
+                            <i class="fas fa-lock"></i>
+                            <span><i class="fas fa-map-marker-alt"></i> <strong>Location:</strong> <span style="color: #1a5d3c;">Click to view (Admin only)</span></span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += `</div>`;
+        container.innerHTML = html;
+    }
+
+    // Show location prompt (ask for login)
+    function showLocationPrompt(itemId) {
+        currentLocationItemId = itemId;
+        document.getElementById('loginPromptModal').style.display = 'block';
+    }
+
+    // Close login prompt
+    function closeLoginPrompt() {
+        document.getElementById('loginPromptModal').style.display = 'none';
+        currentLocationItemId = null;
+    }
+
+    // Show location after login
+    async function showLocationAfterLogin(itemId) {
+        try {
+            const response = await fetch(`/api/items/${itemId}`);
+            const result = await response.json();
+            
+            if (result.success) {
+                const locationText = result.data.location || 'No location information provided';
+                const locationDetails = result.data.location_details || '';
+                
+                document.getElementById('locationModalBody').innerHTML = `
+                    <div class="item-details">
+                        <div class="detail-row">
+                            <i class="fas fa-map-marker-alt" style="color: #1a5d3c;"></i>
+                            <strong>Location:</strong> ${escapeHtml(locationText)}
+                        </div>
+                        ${locationDetails ? `
+                            <div class="detail-row">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Details:</strong> ${escapeHtml(locationDetails)}
+                            </div>
+                        ` : ''}
+                        <hr>
+                        <div class="detail-row">
+                            <i class="fas fa-shield-alt"></i>
+                            <em>This information is confidential and only visible to authorized personnel.</em>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('locationModal').style.display = 'block';
+            } else {
+                alert('Failed to load location details');
+            }
+        } catch (error) {
+            alert('Error loading location');
+        }
+        closeLoginPrompt();
+    }
+
+    function closeLocationModal() {
+        document.getElementById('locationModal').style.display = 'none';
+    }
+
+    // View Item Details
+    async function viewItemDetails(id) {
+        try {
+            const response = await fetch(`/api/items/${id}`);
+            const result = await response.json();
+            
+            if (result.success) {
+                const item = result.data;
+                
+                // Create modal if doesn't exist
+                if (!document.getElementById('itemModal')) {
+                    const modalHtml = `
+                        <div id="itemModal" class="modal">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h3>Item Details</h3>
+                                    <span class="close" onclick="closeItemModal()">&times;</span>
+                                </div>
+                                <div class="modal-body" id="itemModalBody"></div>
+                            </div>
+                        </div>
+                    `;
+                    document.body.insertAdjacentHTML('beforeend', modalHtml);
+                }
+                
+                const itemModalBody = document.getElementById('itemModalBody');
+                itemModalBody.innerHTML = `
+                    <div class="item-details">
+                        <div class="detail-row"><strong>ID:</strong> ${item.id}</div>
+                        <div class="detail-row"><strong>Type:</strong> ${item.type.toUpperCase()}</div>
+                        <div class="detail-row"><strong>Item Name:</strong> ${escapeHtml(item.name)}</div>
+                        <div class="detail-row"><strong>Category:</strong> ${escapeHtml(item.category)}</div>
+                        <div class="detail-row"><strong>CNIC:</strong> ${item.cnic}</div>
+                        <div class="detail-row"><strong>Contact:</strong> ${escapeHtml(item.contact)}</div>
+                        <div class="detail-row"><strong>Reported:</strong> ${new Date(item.created_at).toLocaleString()}</div>
+                        <div class="detail-row"><strong>Status:</strong> ${item.status || 'Open'}</div>
+                        ${item.description ? `<div class="detail-row"><strong>Description:</strong> ${escapeHtml(item.description)}</div>` : ''}
+                        <hr>
+                        <div class="detail-row">
+                            <i class="fas fa-lock"></i>
+                            <em>Location details are protected. <a href="#" onclick="showLocationPrompt(${item.id}); return false;">Click here</a> to view (Admin only)</em>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('itemModal').style.display = 'block';
+            }
+        } catch (error) {
+            alert('Failed to load item details');
+        }
+    }
+
+    function closeItemModal() {
+        const modal = document.getElementById('itemModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    // Search Items
+    async function performSearch() {
+        const keyword = document.getElementById('searchKeyword').value.trim();
+        const type = document.getElementById('searchType').value;
+        
+        if (!keyword) {
+            showAlert('Please enter a search keyword', 'error', 'searchResults');
+            return;
+        }
+        
+        const container = document.getElementById('searchResults');
+        container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i><br>Searching...</div>';
+        
+        try {
+            const response = await fetch(`/api/search?q=${encodeURIComponent(keyword)}&type=${type}`);
+            const result = await response.json();
+            displaySearchResults(result.data, `Search Results for "${keyword}"`);
+        } catch (error) {
+            container.innerHTML = '<div class="alert alert-error">Search failed</div>';
+        }
+    }
+
+    // Validation Functions
+    function validateCNIC(cnic) {
+        const cnicRegex = /^[0-9]{5}-[0-9]{7}-[0-9]{1}$/;
+        return cnicRegex.test(cnic);
+    }
+
+    function validatePhoneNumber(phone) {
+        // Remove spaces and special characters
+        const cleanPhone = phone.replace(/[\s\-\(\)\+]/g, '');
+        // Pakistani phone number patterns
+        const phoneRegex = /^03[0-9]{9}$|^3[0-9]{9}$|^923[0-9]{9}$|^\+923[0-9]{9}$|^0[0-9]{10}$/;
+        return phoneRegex.test(cleanPhone);
+    }
+
+    function validateRequiredFields(data) {
+        const errors = [];
+        if (!data.type) errors.push('Item Type');
+        if (!data.name) errors.push('Item Name');
+        if (!data.category) errors.push('Category');
+        if (!data.cnic) errors.push('CNIC Number');
+        if (!data.contact) errors.push('Contact Number');
+        return errors;
+    }
+
+    // Submit Report with Full Validation
+    document.getElementById('reportForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const type = document.getElementById('reportType').value;
+        const name = document.getElementById('itemName').value.trim();
+        const category = document.getElementById('category').value;
+        const cnic = document.getElementById('cnic').value.trim();
+        const contact = document.getElementById('contact').value.trim();
+        const location = document.getElementById('location').value.trim();
+        const description = document.getElementById('description').value.trim();
+        
+        // Check required fields
+        if (!type) {
+            showAlert('❌ Please select Item Type (Lost or Found)', 'error', 'reportAlert');
+            document.getElementById('reportType').focus();
+            return;
+        }
+        
+        if (!name) {
+            showAlert('❌ Please enter the Item Name', 'error', 'reportAlert');
+            document.getElementById('itemName').focus();
+            return;
+        }
+        
+        if (name.length < 2) {
+            showAlert('❌ Item Name must be at least 2 characters long', 'error', 'reportAlert');
+            document.getElementById('itemName').focus();
+            return;
+        }
+        
+        if (!category) {
+            showAlert('❌ Please select a Category', 'error', 'reportAlert');
+            document.getElementById('category').focus();
+            return;
+        }
+        
+        if (!cnic) {
+            showAlert('❌ Please enter CNIC Number', 'error', 'reportAlert');
+            document.getElementById('cnic').focus();
+            return;
+        }
+        
+        // Validate CNIC format
+        if (!validateCNIC(cnic)) {
+            showAlert('❌ Invalid CNIC Format!\n\nCorrect format: 12345-1234567-1\n\nExample: 37405-1234567-8', 'error', 'reportAlert');
+            document.getElementById('cnic').focus();
+            return;
+        }
+        
+        if (!contact) {
+            showAlert('❌ Please enter Contact Number', 'error', 'reportAlert');
+            document.getElementById('contact').focus();
+            return;
+        }
+        
+        // Validate Phone Number
+        if (!validatePhoneNumber(contact)) {
+            showAlert('❌ Invalid Phone Number!\n\nValid formats:\n• 03001234567\n• 0333-1234567\n• +923001234567\n• 04212345678 (Landline)', 'error', 'reportAlert');
+            document.getElementById('contact').focus();
+            return;
+        }
+        
+        const data = {
+            name: name,
+            category: category,
+            cnic: cnic,
+            contact: contact,
+            location: location,
+            description: description
+        };
+        
+        try {
+            const response = await fetch(`/api/report/${type}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showAlert('✅ Item reported successfully! Thank you for helping.', 'success', 'reportAlert');
+                document.getElementById('reportForm').reset();
+                loadStats();
+                loadAllItems();
+                
+                // Scroll to top to show success message
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                showAlert('❌ ' + (result.message || 'Failed to submit report. Please try again.'), 'error', 'reportAlert');
+            }
+        } catch (error) {
+            showAlert('❌ Network error. Please check your connection and try again.', 'error', 'reportAlert');
+            console.error('Error:', error);
+        }
+    });
+
+    // Real-time validation hints for CNIC
+    document.getElementById('cnic').addEventListener('input', function(e) {
+        let value = e.target.value.replace(/[^0-9]/g, '');
+        if (value.length >= 5) {
+            value = value.substring(0, 5) + '-' + value.substring(5);
+        }
+        if (value.length >= 13) {
+            value = value.substring(0, 13) + '-' + value.substring(13);
+        }
+        if (value.length > 15) {
+            value = value.substring(0, 15);
+        }
+        e.target.value = value;
+    });
+
+    // Real-time validation hint for Phone
+    document.getElementById('contact').addEventListener('input', function(e) {
+        let value = e.target.value.replace(/[^0-9+]/g, '');
+        if (value.startsWith('+92')) {
+            if (value.length > 13) value = value.substring(0, 13);
+        } else {
+            if (value.length > 11) value = value.substring(0, 11);
+        }
+        e.target.value = value;
+    });
+
+    function showAlert(message, type, containerId = 'reportAlert') {
+        const alertDiv = document.getElementById(containerId);
+        if (alertDiv) {
+            // Format message with line breaks
+            const formattedMessage = message.replace(/\n/g, '<br>');
+            alertDiv.innerHTML = `<div class="alert alert-${type}">${formattedMessage}</div>`;
+            
+            // Auto scroll to alert
+            alertDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            
+            setTimeout(() => {
+                alertDiv.innerHTML = '';
+            }, 8000);
+        }
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        loadStats();
+        loadAllItems();
+    });
+
+    // Close modals when clicking outside
+    window.onclick = function(event) {
+        const locationModal = document.getElementById('locationModal');
+        const loginPrompt = document.getElementById('loginPromptModal');
+        const itemModal = document.getElementById('itemModal');
+        
+        if (event.target === locationModal) {
+            closeLocationModal();
+        }
+        if (event.target === loginPrompt) {
+            closeLoginPrompt();
+        }
+        if (event.target === itemModal) {
+            closeItemModal();
+        }
+    }
+
+    // Make functions available globally
+    window.showLocationAfterLogin = showLocationAfterLogin;
+    window.showLocationPrompt = showLocationPrompt;
+    window.closeLoginPrompt = closeLoginPrompt;
+    window.closeLocationModal = closeLocationModal;
+    window.closeItemModal = closeItemModal;
+    window.viewItemDetails = viewItemDetails;
+    window.showSection = showSection;
+    window.loadLostItems = loadLostItems;
+    window.loadFoundItems = loadFoundItems;
+    window.loadAllItems = loadAllItems;
+    window.performSearch = performSearch;
+</script>
+</body>
+</html>

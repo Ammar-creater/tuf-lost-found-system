@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TUF University - Admin Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #1a5d3c 0%, #0a2e1f 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .login-container { background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); width: 90%; max-width: 400px; overflow: hidden; }
+        .login-header { background: linear-gradient(135deg, #1a5d3c 0%, #0a2e1f 100%); color: white; padding: 30px; text-align: center; }
+        .login-header i { font-size: 3rem; margin-bottom: 10px; }
+        .login-header h1 { font-size: 1.5rem; }
+        .login-body { padding: 30px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: #333; }
+        .form-group input { width: 100%; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1rem; }
+        .form-group input:focus { outline: none; border-color: #1a5d3c; }
+        .btn-login { width: 100%; padding: 12px; background: #1a5d3c; color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+        .btn-login:hover { background: #0a2e1f; transform: translateY(-2px); }
+        .alert { padding: 12px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
+        .alert-error { background: #f8d7da; color: #721c24; }
+        .alert-success { background: #d4edda; color: #155724; }
+        .back-link { text-align: center; margin-top: 20px; }
+        .back-link a { color: #1a5d3c; text-decoration: none; }
+        .info { text-align: center; margin-top: 15px; padding: 10px; background: #f0f0f0; border-radius: 10px; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <i class="fas fa-university"></i>
+            <h1>TUF University</h1>
+            <p>Admin Portal Login</p>
+        </div>
+        <div class="login-body">
+            <div id="alert"></div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="username" placeholder="Enter username" required autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" placeholder="Enter password" required>
+                </div>
+                <button type="submit" class="btn-login">Login</button>
+            </form>
+           
+            <div class="back-link">
+                <a href="/">← Back to Public Portal</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Store login session
+                    localStorage.setItem('adminLoggedIn', 'true');
+                    localStorage.setItem('adminName', username);
+                    localStorage.setItem('adminRole', result.role || 'admin');
+                    
+                    showAlert('Login successful! Redirecting...', 'success');
+                    setTimeout(() => {
+                        // Check if there's a return URL
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const returnUrl = urlParams.get('return');
+                        if (returnUrl) {
+                            window.location.href = returnUrl;
+                        } else {
+                            window.location.href = '/admin.html';
+                        }
+                    }, 1000);
+                } else {
+                    showAlert('Invalid username or password', 'error');
+                }
+            } catch (error) {
+                showAlert('Login failed. Please try again.', 'error');
+            }
+        });
+        
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('alert');
+            alertDiv.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => {
+                alertDiv.innerHTML = '';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

@@ -48,20 +48,28 @@ db.connect((err) => {
 });
 
 // ============ STATIC PAGE ROUTES ============
+// Serve static files - FIXED VERSION
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve homepage
+// Explicit routes for all HTML files
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Serve login page
+app.get('/index.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 app.get('/login.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// Serve admin page
 app.get('/admin.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+app.get('/css/style.css', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'css', 'style.css'));
 });
 
 // ============ API ROUTES ============

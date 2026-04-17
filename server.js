@@ -21,12 +21,13 @@ app.use((req, res, next) => {
 });
 
 // Database connection with SSL support for production
+// Database connection - works on Railway, Local, and Aiven
 const db = mysql.createConnection({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'tuf_lost_found_db',
-    port: process.env.DB_PORT || 3306,
+    host: process.env.MYSQL_HOST || process.env.DB_HOST || 'localhost',
+    user: process.env.MYSQL_USER || process.env.DB_USER || 'root',
+    password: process.env.MYSQL_PASSWORD || process.env.DB_PASSWORD || '',
+    database: process.env.MYSQL_DATABASE || process.env.DB_NAME || 'tuf_lost_found_db',
+    port: parseInt(process.env.MYSQL_PORT || process.env.DB_PORT || '3306'),
     ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
 });
 

@@ -178,7 +178,24 @@ app.post('/auth/login', (req, res) => {
 app.use((req, res) => {
     res.status(404).sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-
+// Debug endpoint - check what files are on Railway
+app.get('/debug', (req, res) => {
+    const fs = require('fs');
+    try {
+        const files = fs.readdirSync('.');
+        const publicExists = fs.existsSync('./public');
+        const indexExists = fs.existsSync('./public/index.html');
+        res.json({
+            success: true,
+            publicExists: publicExists,
+            indexExists: indexExists,
+            files: files,
+            currentDirectory: __dirname
+        });
+    } catch (error) {
+        res.json({ success: false, error: error.message });
+    }
+});
 // Start server
 app.listen(PORT, () => {
     console.log(`
@@ -191,4 +208,8 @@ app.listen(PORT, () => {
 💚 Health Check: http://localhost:${PORT}/health
 ========================================
     `);
+});
+// Simple test route
+app.get('/test', (req, res) => {
+    res.send('Railway server is working!');
 });

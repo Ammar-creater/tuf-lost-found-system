@@ -9,16 +9,16 @@ const PORT = process.env.PORT || 3000;
 
 // Debug: Check environment variables
 console.log('=== Environment Variables ===');
-console.log('DB_HOST:', process.env.DB_HOST);
-console.log('DB_USER:', process.env.DB_USER);
-console.log('DB_PASSWORD:', process.env.DB_PASSWORD ? '***SET***' : 'NOT SET');
-console.log('DB_NAME:', process.env.DB_NAME);
+console.log('MYSQLHOST:', process.env.MYSQLHOST);
+console.log('MYSQLUSER:', process.env.MYSQLUSER);
+console.log('MYSQLPASSWORD:', process.env.MYSQLPASSWORD ? '***SET***' : 'NOT SET');
+console.log('MYSQLDATABASE:', process.env.MYSQLDATABASE);
 console.log('=============================');
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // CORS
 app.use((req, res, next) => {
@@ -28,9 +28,8 @@ app.use((req, res, next) => {
 });
 
 // ============================================
-// DATABASE CONNECTION - SINGLE WORKING VERSION
+// DATABASE CONNECTION
 // ============================================
-// Database connection for Railway
 const db = mysql.createConnection({
     host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
     user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
@@ -46,6 +45,23 @@ db.connect((err) => {
     } else {
         console.log('✅ Database connected successfully!');
     }
+});
+
+// ============ STATIC PAGE ROUTES ============
+
+// Serve homepage
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Serve login page
+app.get('/login.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+// Serve admin page
+app.get('/admin.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
 // ============ API ROUTES ============
@@ -156,6 +172,11 @@ app.post('/auth/login', (req, res) => {
     } else {
         res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
+});
+
+// Catch-all for any other routes (404)
+app.use((req, res) => {
+    res.status(404).sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Start server

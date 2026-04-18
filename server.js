@@ -30,16 +30,26 @@ app.use((req, res, next) => {
 });
 
 
+// Database connection for Railway (internal)
 const db = mysql.createPool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: parseInt(process.env.DB_PORT || '3306'),
-    // No SSL for Railway public proxy
-    connectionLimit: 1,
-    connectTimeout: 30000,
-    acquireTimeout: 30000
+    host: process.env.MYSQLHOST || 'mysql.railway.internal',
+    user: process.env.MYSQLUSER || 'root',
+    password: process.env.MYSQLPASSWORD || '',
+    database: process.env.MYSQLDATABASE || 'railway',
+    port: 3306,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+});
+
+// Test connection
+db.getConnection((err, connection) => {
+    if (err) {
+        console.error('❌ Database connection failed:', err.message);
+    } else {
+        console.log('✅ Database connected successfully!');
+        connection.release();
+    }
 });
 
 // Test connection

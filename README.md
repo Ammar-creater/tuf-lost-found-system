@@ -36,3 +36,16 @@ A secure, production-ready Lost & Found management system for TUF University wit
 ```bash
 git clone https://github.com/Ammar-creater/tuf-lost-found-system.git
 cd tuf-lost-found-system
+## 🌐 Cloudflare Tunnel Setup (Public Access)
+
+To make your local server accessible online without deployment:
+
+### Prerequisites
+- Your app running locally on port 3000
+- Cloudflare account (free)
+
+### Installation
+
+**Windows (using winget):**
+```bash
+winget install cloudflare.cloudflared

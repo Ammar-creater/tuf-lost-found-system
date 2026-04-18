@@ -29,20 +29,17 @@ app.use((req, res, next) => {
     next();
 });
 
-// ============================================
-// DATABASE CONNECTION - FIXED WITH POOL
-// ============================================
+
 const db = mysql.createPool({
-    host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
-    user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
-    password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || '',
-    database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'tuf_lost_found_db',
-    port: parseInt(process.env.MYSQLPORT || process.env.DB_PORT || '3306'),
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
-    enableKeepAlive: true,
-    keepAliveInitialDelay: 10000
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: parseInt(process.env.DB_PORT || '3306'),
+    // No SSL for Railway public proxy
+    connectionLimit: 1,
+    connectTimeout: 30000,
+    acquireTimeout: 30000
 });
 
 // Test connection

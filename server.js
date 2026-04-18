@@ -31,12 +31,13 @@ app.use((req, res, next) => {
 
 
 // Database connection for Railway (internal)
+// Database connection - works both locally and on Railway
 const db = mysql.createPool({
-    host: process.env.MYSQLHOST || 'mysql.railway.internal',
-    user: process.env.MYSQLUSER || 'root',
-    password: process.env.MYSQLPASSWORD || '',
-    database: process.env.MYSQLDATABASE || 'railway',
-    port: 3306,
+    host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
+    user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
+    password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || '',
+    database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'tuf_lost_found_db',
+    port: parseInt(process.env.MYSQLPORT || process.env.DB_PORT || '3306'),
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0

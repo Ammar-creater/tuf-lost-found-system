@@ -1,6 +1,4 @@
-# Create .gitignore with content
-@"
-# Environment variables (passwords - NEVER commit)
+﻿# Environment variables (passwords - NEVER commit)
 .env
 .env.local
 .env.production
@@ -8,10 +6,6 @@
 # Dependencies
 node_modules/
 package-lock.json
-
-# Database
-*.sql
-*.db
 
 # Logs
 *.log
@@ -24,4 +18,3 @@ desktop.ini
 # IDE
 .vscode/
 .idea/
-"@ | Out-File -FilePath .gitignore -Encoding utf8

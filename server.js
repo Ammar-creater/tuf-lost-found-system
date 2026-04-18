@@ -28,30 +28,32 @@ app.use((req, res, next) => {
 });
 
 // ============================================
-// DATABASE CONNECTION
+// DATABASE CONNECTION - FIXED WITH POOL
 // ============================================
-const db = mysql.createConnection({
+const db = mysql.createPool({
     host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
     user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
     password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || '',
     database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'tuf_lost_found_db',
-    port: parseInt(process.env.MYSQLPORT || process.env.DB_PORT || '3306')
+    port: parseInt(process.env.MYSQLPORT || process.env.DB_PORT || '3306'),
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 10000
 });
 
-// Connect to database
-db.connect((err) => {
+// Test connection
+db.getConnection((err, connection) => {
     if (err) {
         console.error('❌ Database connection failed:', err.message);
     } else {
         console.log('✅ Database connected successfully!');
+        connection.release();
     }
 });
 
 // ============ STATIC PAGE ROUTES ============
-// Serve static files - FIXED VERSION
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Explicit routes for all HTML files
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -182,11 +184,7 @@ app.post('/auth/login', (req, res) => {
     }
 });
 
-// Catch-all for any other routes (404)
-app.use((req, res) => {
-    res.status(404).sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-// Debug endpoint - check what files are on Railway
+// Debug endpoint
 app.get('/debug', (req, res) => {
     const fs = require('fs');
     try {
@@ -204,6 +202,17 @@ app.get('/debug', (req, res) => {
         res.json({ success: false, error: error.message });
     }
 });
+
+// Simple test route
+app.get('/test', (req, res) => {
+    res.send('Railway server is working!');
+});
+
+// Catch-all for 404
+app.use((req, res) => {
+    res.status(404).sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // Start server
 app.listen(PORT, () => {
     console.log(`
@@ -216,8 +225,4 @@ app.listen(PORT, () => {
 💚 Health Check: http://localhost:${PORT}/health
 ========================================
     `);
-});
-// Simple test route
-app.get('/test', (req, res) => {
-    res.send('Railway server is working!');
 });

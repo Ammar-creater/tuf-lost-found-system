@@ -16,7 +16,7 @@ const reportLimiter = rateLimit({
     message: { success: false, message: 'Report limit reached. Try again later.' }
 });
 
-// Mask CNIC for public view
+// Helper function to mask CNIC for public view
 function maskCNIC(cnic) {
     if (!cnic) return 'XXXXX-XXXXXXX-X';
     const parts = cnic.split('-');
@@ -26,75 +26,97 @@ function maskCNIC(cnic) {
     return 'XXXXX-XXXXXXX-X';
 }
 
+// Helper function to validate Pakistani phone number
+function isValidPhoneNumber(phone) {
+    const cleanPhone = phone.replace(/[\s\-\(\)\+]/g, '');
+    const patterns = [
+        /^03[0-9]{9}$/,
+        /^3[0-9]{9}$/,
+        /^923[0-9]{9}$/,
+        /^\+923[0-9]{9}$/,
+        /^0[0-9]{10}$/
+    ];
+    for (let pattern of patterns) {
+        if (pattern.test(cleanPhone)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 // ============ PUBLIC ENDPOINTS ============
 
-// Report lost item (with phone validation)
-app.post('/api/report/lost', (req, res) => {
-    const { name, category, cnic, contact, location, description } = req.body;
-    
-    // Validate CNIC
-    const cnicRegex = /^[0-9]{5}-[0-9]{7}-[0-9]{1}$/;
-    if (!cnicRegex.test(cnic)) {
-        return res.status(400).json({ success: false, message: 'Invalid CNIC format. Use: 12345-1234567-1' });
-    }
-    
-    // Validate Phone Number
-    if (!isValidPhoneNumber(contact)) {
-        return res.status(400).json({ 
-            success: false, 
-            message: 'Invalid phone number. Use Pakistani format: 03XXXXXXXXX (e.g., 03001234567)' 
-        });
-    }
-    
-    const query = 'INSERT INTO items (type, name, category, cnic, contact, location, description, status) VALUES (?, ?, ?, ?, ?, ?, ?, "open")';
-    db.query(query, ['lost', name, category, cnic, contact, location, description], (err, result) => {
-        if (err) {
-            console.error('Error:', err);
-            return res.status(500).json({ success: false, message: 'Database error' });
+// Report lost item
+router.post('/report/lost', reportLimiter, async (req, res) => {
+    try {
+        const { name, category, cnic, contact, location, description } = req.body;
+        
+        const cnicRegex = /^[0-9]{5}-[0-9]{7}-[0-9]{1}$/;
+        if (!cnicRegex.test(cnic)) {
+            return res.status(400).json({ success: false, message: 'Invalid CNIC format. Use: 12345-1234567-1' });
         }
-        res.json({ success: true, message: 'Lost item reported successfully', id: result.insertId });
-    });
+        
+        if (!isValidPhoneNumber(contact)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Invalid phone number. Use Pakistani format: 03XXXXXXXXX (e.g., 03001234567)' 
+            });
+        }
+        
+        const query = 'INSERT INTO items (type, name, category, cnic, contact, location, description, status) VALUES (?, ?, ?, ?, ?, ?, ?, "open")';
+        const result = await db.executeQuery(query, ['lost', name, category, cnic, contact, location, description]);
+        
+        if (result.success) {
+            res.json({ success: true, message: 'Lost item reported successfully', id: result.data.insertId });
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ success: false, message: 'Database error' });
+    }
 });
 
-// Report found item (with phone validation)
-app.post('/api/report/found', (req, res) => {
-    const { name, category, cnic, contact, location, description } = req.body;
-    
-    // Validate CNIC
-    const cnicRegex = /^[0-9]{5}-[0-9]{7}-[0-9]{1}$/;
-    if (!cnicRegex.test(cnic)) {
-        return res.status(400).json({ success: false, message: 'Invalid CNIC format. Use: 12345-1234567-1' });
-    }
-    
-    // Validate Phone Number
-    if (!isValidPhoneNumber(contact)) {
-        return res.status(400).json({ 
-            success: false, 
-            message: 'Invalid phone number. Use Pakistani format: 03XXXXXXXXX (e.g., 03001234567)' 
-        });
-    }
-    
-    const query = 'INSERT INTO items (type, name, category, cnic, contact, location, description, status) VALUES (?, ?, ?, ?, ?, ?, ?, "open")';
-    db.query(query, ['found', name, category, cnic, contact, location, description], (err, result) => {
-        if (err) {
-            console.error('Error:', err);
-            return res.status(500).json({ success: false, message: 'Database error' });
+// Report found item
+router.post('/report/found', reportLimiter, async (req, res) => {
+    try {
+        const { name, category, cnic, contact, location, description } = req.body;
+        
+        const cnicRegex = /^[0-9]{5}-[0-9]{7}-[0-9]{1}$/;
+        if (!cnicRegex.test(cnic)) {
+            return res.status(400).json({ success: false, message: 'Invalid CNIC format. Use: 12345-1234567-1' });
         }
-        res.json({ success: true, message: 'Found item reported successfully', id: result.insertId });
-    });
+        
+        if (!isValidPhoneNumber(contact)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Invalid phone number. Use Pakistani format: 03XXXXXXXXX (e.g., 03001234567)' 
+            });
+        }
+        
+        const query = 'INSERT INTO items (type, name, category, cnic, contact, location, description, status) VALUES (?, ?, ?, ?, ?, ?, ?, "open")';
+        const result = await db.executeQuery(query, ['found', name, category, cnic, contact, location, description]);
+        
+        if (result.success) {
+            res.json({ success: true, message: 'Found item reported successfully', id: result.data.insertId });
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ success: false, message: 'Database error' });
+    }
 });
 
 // Get lost items (public - location hidden)
 router.get('/items/lost', async (req, res) => {
     try {
-        const query = 'SELECT * FROM items WHERE type = "lost" ORDER BY created_at DESC';
+        const query = 'SELECT id, type, name, category, cnic, contact, created_at, status FROM items WHERE type = "lost" ORDER BY created_at DESC';
         const result = await db.executeQuery(query);
         
         if (result.success) {
             const items = result.data.map(item => ({
                 ...item,
-                location: undefined,
-                location_details: undefined,
                 cnic: maskCNIC(item.cnic),
                 contact: item.contact.replace(/[0-9]/g, '*').substring(0, 4) + '****'
             }));
@@ -110,14 +132,12 @@ router.get('/items/lost', async (req, res) => {
 // Get found items (public - location hidden)
 router.get('/items/found', async (req, res) => {
     try {
-        const query = 'SELECT * FROM items WHERE type = "found" ORDER BY created_at DESC';
+        const query = 'SELECT id, type, name, category, cnic, contact, created_at, status FROM items WHERE type = "found" ORDER BY created_at DESC';
         const result = await db.executeQuery(query);
         
         if (result.success) {
             const items = result.data.map(item => ({
                 ...item,
-                location: undefined,
-                location_details: undefined,
                 cnic: maskCNIC(item.cnic),
                 contact: item.contact.replace(/[0-9]/g, '*').substring(0, 4) + '****'
             }));
@@ -133,13 +153,11 @@ router.get('/items/found', async (req, res) => {
 // Get single item (public)
 router.get('/items/:id', async (req, res) => {
     try {
-        const query = 'SELECT * FROM items WHERE id = ?';
+        const query = 'SELECT id, type, name, category, cnic, contact, created_at, status, description FROM items WHERE id = ?';
         const result = await db.executeQuery(query, [req.params.id]);
         
         if (result.success && result.data.length > 0) {
             const item = result.data[0];
-            delete item.location;
-            delete item.location_details;
             item.cnic = maskCNIC(item.cnic);
             res.json({ success: true, data: item });
         } else {
@@ -159,7 +177,7 @@ router.get('/search', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Search keyword must be at least 2 characters' });
         }
         
-        let query = `SELECT * FROM items WHERE (name LIKE ? OR category LIKE ? OR description LIKE ?)`;
+        let query = `SELECT id, type, name, category, cnic, contact, created_at, status FROM items WHERE (name LIKE ? OR category LIKE ? OR description LIKE ?)`;
         let params = [`%${q}%`, `%${q}%`, `%${q}%`];
         
         if (type && type !== 'all') {
@@ -174,7 +192,6 @@ router.get('/search', async (req, res) => {
         if (result.success) {
             const items = result.data.map(item => ({
                 ...item,
-                location: undefined,
                 cnic: maskCNIC(item.cnic),
                 contact: item.contact.replace(/[0-9]/g, '*').substring(0, 4) + '****'
             }));

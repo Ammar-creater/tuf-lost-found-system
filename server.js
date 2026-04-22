@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const mysql = require('mysql2');
+const fs = require('fs');
 const dotenv = require('dotenv');
 dotenv.config();
 
@@ -9,10 +10,10 @@ const PORT = process.env.PORT || 3000;
 
 // Debug: Check environment variables
 console.log('=== Environment Variables ===');
-console.log('MYSQLHOST:', process.env.MYSQLHOST);
-console.log('MYSQLUSER:', process.env.MYSQLUSER);
-console.log('MYSQLPASSWORD:', process.env.MYSQLPASSWORD ? '***SET***' : 'NOT SET');
-console.log('MYSQLDATABASE:', process.env.MYSQLDATABASE);
+console.log('DB_HOST:', process.env.DB_HOST);
+console.log('DB_USER:', process.env.DB_USER);
+console.log('DB_PASSWORD:', process.env.DB_PASSWORD ? '***SET***' : 'NOT SET');
+console.log('DB_NAME:', process.env.DB_NAME);
 console.log('=============================');
 
 // Middleware
@@ -21,7 +22,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // CORS
-// CORS - Allow frontend from Vercel
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
@@ -29,27 +29,19 @@ app.use((req, res, next) => {
     next();
 });
 
-
-// Database connection for Railway (internal)
-// Database connection - works both locally and on Railway
-// Add this for better serverless connection
-// Aiven MySQL connection optimized for Vercel serverless
-const fs = require('fs');
-const mysql = require('mysql2');
-
+// Database connection
 const db = mysql.createPool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     port: parseInt(process.env.DB_PORT || '3306'),
-    ssl: {
-        ca: fs.readFileSync('./ca.pem')  // Required for Aiven!
-    },
+    ssl: fs.existsSync('./ca.pem') ? { ca: fs.readFileSync('./ca.pem') } : { rejectUnauthorized: false },
     connectionLimit: 1,
     connectTimeout: 30000,
     acquireTimeout: 30000
 });
+
 // Wrapper for database queries with retry
 async function executeQuery(query, params) {
     return new Promise((resolve, reject) => {
@@ -68,15 +60,6 @@ async function executeQuery(query, params) {
         });
     });
 }
-// Test connection
-db.getConnection((err, connection) => {
-    if (err) {
-        console.error('❌ Database connection failed:', err.message);
-    } else {
-        console.log('✅ Database connected successfully!');
-        connection.release();
-    }
-});
 
 // Test connection
 db.getConnection((err, connection) => {
@@ -121,12 +104,19 @@ app.get('/api/test', (req, res) => {
     res.json({ success: true, message: 'API is working!' });
 });
 
-// Get statistics
+// Get statistics - FIXED
 app.get('/api/stats', async (req, res) => {
+    const statsQuery = `SELECT 
+        COUNT(CASE WHEN type = 'lost' THEN 1 END) as lost_count,
+        COUNT(CASE WHEN type = 'found' THEN 1 END) as found_count,
+        COUNT(*) as total_count
+        FROM items`;
+    
     try {
-        const result = await executeQuery(query);
+        const result = await executeQuery(statsQuery);
         res.json({ success: true, data: result[0] });
     } catch (error) {
+        console.error('Stats error:', error);
         res.json({ success: true, data: { lost_count: 0, found_count: 0, total_count: 0 } });
     }
 });
@@ -214,7 +204,6 @@ app.post('/auth/login', (req, res) => {
 
 // Debug endpoint
 app.get('/debug', (req, res) => {
-    const fs = require('fs');
     try {
         const files = fs.readdirSync('.');
         const publicExists = fs.existsSync('./public');
@@ -233,7 +222,12 @@ app.get('/debug', (req, res) => {
 
 // Simple test route
 app.get('/test', (req, res) => {
-    res.send('Railway server is working!');
+    res.send('Server is working!');
+});
+
+// Simple ping route (no database)
+app.get('/ping', (req, res) => {
+    res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
 // Catch-all for 404

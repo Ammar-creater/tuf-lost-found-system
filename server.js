@@ -32,17 +32,42 @@ app.use((req, res, next) => {
 
 // Database connection for Railway (internal)
 // Database connection - works both locally and on Railway
-const db = mysql.createPool({
-    host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
-    user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
-    password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || '',
-    database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'tuf_lost_found_db',
-    port: parseInt(process.env.MYSQLPORT || process.env.DB_PORT || '3306'),
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-});
+// Add this for better serverless connection
+// Aiven MySQL connection optimized for Vercel serverless
+const fs = require('fs');
+const mysql = require('mysql2');
 
+const db = mysql.createPool({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: parseInt(process.env.DB_PORT || '3306'),
+    ssl: {
+        ca: fs.readFileSync('./ca.pem')  // Required for Aiven!
+    },
+    connectionLimit: 1,
+    connectTimeout: 30000,
+    acquireTimeout: 30000
+});
+// Wrapper for database queries with retry
+async function executeQuery(query, params) {
+    return new Promise((resolve, reject) => {
+        db.query(query, params, (err, results) => {
+            if (err && (err.code === 'ETIMEDOUT' || err.code === 'PROTOCOL_CONNECTION_LOST')) {
+                console.log('Connection lost, retrying...');
+                db.query(query, params, (err2, results2) => {
+                    if (err2) reject(err2);
+                    else resolve(results2);
+                });
+            } else if (err) {
+                reject(err);
+            } else {
+                resolve(results);
+            }
+        });
+    });
+}
 // Test connection
 db.getConnection((err, connection) => {
     if (err) {
@@ -97,20 +122,13 @@ app.get('/api/test', (req, res) => {
 });
 
 // Get statistics
-app.get('/api/stats', (req, res) => {
-    const query = `SELECT 
-        COUNT(CASE WHEN type = 'lost' THEN 1 END) as lost_count,
-        COUNT(CASE WHEN type = 'found' THEN 1 END) as found_count,
-        COUNT(*) as total_count
-        FROM items`;
-    
-    db.query(query, (err, result) => {
-        if (err) {
-            console.error('Stats error:', err);
-            return res.json({ success: true, data: { lost_count: 0, found_count: 0, total_count: 0 } });
-        }
+app.get('/api/stats', async (req, res) => {
+    try {
+        const result = await executeQuery(query);
         res.json({ success: true, data: result[0] });
-    });
+    } catch (error) {
+        res.json({ success: true, data: { lost_count: 0, found_count: 0, total_count: 0 } });
+    }
 });
 
 // Get lost items

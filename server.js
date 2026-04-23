@@ -30,21 +30,19 @@ app.use((req, res, next) => {
 });
 
 
-// Railway MySQL connection (remove invalid options)
-// Auto-detect environment
-// Auto-detect environment
-const isLocal = !process.env.MYSQLHOST;
-
+// Database connection for Railway (internal)
+// Database connection - works both locally and on Railway
 const db = mysql.createPool({
-    host: isLocal ? 'localhost' : (process.env.MYSQLHOST || 'mysql.railway.internal'),
-    user: isLocal ? 'root' : (process.env.MYSQLUSER || 'root'),
-    password: isLocal ? 'AmmarmaanDBMS' : (process.env.MYSQLPASSWORD || ''),
-    database: isLocal ? 'tuf_lost_found_db' : (process.env.MYSQLDATABASE || 'railway'),
-    port: 3306,
+    host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
+    user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
+    password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || '',
+    database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'tuf_lost_found_db',
+    port: parseInt(process.env.MYSQLPORT || process.env.DB_PORT || '3306'),
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
 });
+
 // Test connection
 db.getConnection((err, connection) => {
     if (err) {
@@ -54,6 +52,8 @@ db.getConnection((err, connection) => {
         connection.release();
     }
 });
+
+
 // ============ STATIC PAGE ROUTES ============
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));

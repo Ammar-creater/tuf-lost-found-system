@@ -1,7 +1,6 @@
 const express = require('express');
 const path = require('path');
 const mysql = require('mysql2');
-const fs = require('fs');
 const dotenv = require('dotenv');
 dotenv.config();
 
@@ -10,10 +9,10 @@ const PORT = process.env.PORT || 3000;
 
 // Debug: Check environment variables
 console.log('=== Environment Variables ===');
-console.log('DB_HOST:', process.env.DB_HOST);
-console.log('DB_USER:', process.env.DB_USER);
-console.log('DB_PASSWORD:', process.env.DB_PASSWORD ? '***SET***' : 'NOT SET');
-console.log('DB_NAME:', process.env.DB_NAME);
+console.log('MYSQLHOST:', process.env.MYSQLHOST);
+console.log('MYSQLUSER:', process.env.MYSQLUSER);
+console.log('MYSQLPASSWORD:', process.env.MYSQLPASSWORD ? '***SET***' : 'NOT SET');
+console.log('MYSQLDATABASE:', process.env.MYSQLDATABASE);
 console.log('=============================');
 
 // Middleware
@@ -22,6 +21,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // CORS
+// CORS - Allow frontend from Vercel
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
@@ -29,38 +29,22 @@ app.use((req, res, next) => {
     next();
 });
 
-// Database connection
+
+// Railway MySQL connection (remove invalid options)
+// Auto-detect environment
+// Auto-detect environment
+const isLocal = !process.env.MYSQLHOST;
+
 const db = mysql.createPool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: parseInt(process.env.DB_PORT || '3306'),
-    ssl: fs.existsSync('./ca.pem') ? { ca: fs.readFileSync('./ca.pem') } : { rejectUnauthorized: false },
-    connectionLimit: 1,
-    connectTimeout: 30000,
-    acquireTimeout: 30000
+    host: isLocal ? 'localhost' : (process.env.MYSQLHOST || 'mysql.railway.internal'),
+    user: isLocal ? 'root' : (process.env.MYSQLUSER || 'root'),
+    password: isLocal ? 'AmmarmaanDBMS' : (process.env.MYSQLPASSWORD || ''),
+    database: isLocal ? 'tuf_lost_found_db' : (process.env.MYSQLDATABASE || 'railway'),
+    port: 3306,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 });
-
-// Wrapper for database queries with retry
-async function executeQuery(query, params) {
-    return new Promise((resolve, reject) => {
-        db.query(query, params, (err, results) => {
-            if (err && (err.code === 'ETIMEDOUT' || err.code === 'PROTOCOL_CONNECTION_LOST')) {
-                console.log('Connection lost, retrying...');
-                db.query(query, params, (err2, results2) => {
-                    if (err2) reject(err2);
-                    else resolve(results2);
-                });
-            } else if (err) {
-                reject(err);
-            } else {
-                resolve(results);
-            }
-        });
-    });
-}
-
 // Test connection
 db.getConnection((err, connection) => {
     if (err) {
@@ -70,7 +54,6 @@ db.getConnection((err, connection) => {
         connection.release();
     }
 });
-
 // ============ STATIC PAGE ROUTES ============
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -104,21 +87,21 @@ app.get('/api/test', (req, res) => {
     res.json({ success: true, message: 'API is working!' });
 });
 
-// Get statistics - FIXED
-app.get('/api/stats', async (req, res) => {
-    const statsQuery = `SELECT 
+// Get statistics
+app.get('/api/stats', (req, res) => {
+    const query = `SELECT 
         COUNT(CASE WHEN type = 'lost' THEN 1 END) as lost_count,
         COUNT(CASE WHEN type = 'found' THEN 1 END) as found_count,
         COUNT(*) as total_count
         FROM items`;
     
-    try {
-        const result = await executeQuery(statsQuery);
+    db.query(query, (err, result) => {
+        if (err) {
+            console.error('Stats error:', err);
+            return res.json({ success: true, data: { lost_count: 0, found_count: 0, total_count: 0 } });
+        }
         res.json({ success: true, data: result[0] });
-    } catch (error) {
-        console.error('Stats error:', error);
-        res.json({ success: true, data: { lost_count: 0, found_count: 0, total_count: 0 } });
-    }
+    });
 });
 
 // Get lost items
@@ -204,6 +187,7 @@ app.post('/auth/login', (req, res) => {
 
 // Debug endpoint
 app.get('/debug', (req, res) => {
+    const fs = require('fs');
     try {
         const files = fs.readdirSync('.');
         const publicExists = fs.existsSync('./public');
@@ -222,12 +206,7 @@ app.get('/debug', (req, res) => {
 
 // Simple test route
 app.get('/test', (req, res) => {
-    res.send('Server is working!');
-});
-
-// Simple ping route (no database)
-app.get('/ping', (req, res) => {
-    res.json({ status: 'ok', time: new Date().toISOString() });
+    res.send('Railway server is working!');
 });
 
 // Catch-all for 404
